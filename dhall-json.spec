@@ -30,7 +30,7 @@ BuildRequires:  ghc-Cabal-devel
 BuildRequires:  ghc-rpm-macros
 BuildRequires:  ghc-aeson-devel
 BuildRequires:  ghc-aeson-pretty-devel
-%if 0%{fedora} >= 33
+%if 0%{fedora} >= 34
 BuildRequires:  ghc-aeson-yaml-devel
 %endif
 BuildRequires:  ghc-ansi-terminal-devel
@@ -53,13 +53,19 @@ BuildRequires:  ghc-vector-devel
 BuildRequires:  cabal-install > 1.18
 # for missing dep 'dhall':
 BuildRequires:  ghc-Diff-devel
+%if 0%{?fedora} >= 32
 BuildRequires:  ghc-atomic-write-devel
+%endif
 BuildRequires:  ghc-case-insensitive-devel
+%if 0%{?fedora} >= 32
 BuildRequires:  ghc-cborg-devel
 BuildRequires:  ghc-cborg-json-devel
+%endif
 BuildRequires:  ghc-contravariant-devel
 BuildRequires:  ghc-cryptonite-devel
+%if 0%{?fedora} >= 32
 BuildRequires:  ghc-data-fix-devel
+%endif
 BuildRequires:  ghc-deepseq-devel
 BuildRequires:  ghc-directory-devel
 BuildRequires:  ghc-dotgen-devel
@@ -76,13 +82,19 @@ BuildRequires:  ghc-memory-devel
 BuildRequires:  ghc-mtl-devel
 BuildRequires:  ghc-network-uri-devel
 BuildRequires:  ghc-parser-combinators-devel
+%if 0%{?fedora} >= 32
 BuildRequires:  ghc-parsers-devel
 BuildRequires:  ghc-pretty-simple-devel
+%endif
 BuildRequires:  ghc-profunctors-devel
 BuildRequires:  ghc-repline-devel
+%if 0%{?fedora} >= 32
 BuildRequires:  ghc-serialise-devel
+%endif
 BuildRequires:  ghc-template-haskell-devel
+%if 0%{?fedora} >= 32
 BuildRequires:  ghc-text-manipulate-devel
+%endif
 BuildRequires:  ghc-th-lift-instances-devel
 BuildRequires:  ghc-transformers-devel
 BuildRequires:  ghc-transformers-compat-devel
@@ -106,16 +118,22 @@ this package if you want an executable
 %build
 # Begin cabal-rpm build:
 cabal update
-cabal build exe:dhall-to-json exe:dhall-to-yaml exe:json-to-dhall
+%if 0%{fedora} < 33
+cabal sandbox init
+cabal install
+%endif
 # End cabal-rpm build
 
 
 %install
+mkdir -p %{buildroot}%{_bindir}
+%if 0%{fedora} >= 33
+cabal install --install-method=copy --installdir=%{buildroot}%{_bindir}
+%else
 for i in dhall-to-json dhall-to-yaml json-to-dhall; do
-  bin=dist-newstyle/build/%{_arch}-linux/ghc-*/%{name}-%{version}/x/$i/build/$i/$i
-  strip $bin
-  install -D -t %{buildroot}%{_bindir} $bin
+strip -s -o %{buildroot}%{_bindir}/$i .cabal-sandbox/bin/$i
 done
+%endif
 # Begin cabal-rpm install
 mkdir -p %{buildroot}%{_datadir}/bash-completion/completions/
 %{buildroot}%{_bindir}/dhall-to-json --bash-completion-script dhall-to-json > %{buildroot}%{_datadir}/bash-completion/completions/dhall-to-json
